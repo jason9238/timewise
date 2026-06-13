@@ -29,6 +29,17 @@ create policy "Read own admin row"
   for select
   using (auth.uid() = user_id);
 
+-- Subscribable calendar feed tokens. Managed only by the `calendar` edge
+-- function (service role); the token in the URL is the secret.
+create table if not exists public.calendar_feeds (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  token text unique not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.calendar_feeds enable row level security;
+-- No policies: only the service-role edge function reads/writes this table.
+
 -- ── Bootstrap the FIRST admin (run once, after signing up in the app) ──
 -- Replace the email with your own account's email:
 --

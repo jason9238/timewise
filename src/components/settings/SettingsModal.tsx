@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { format, startOfWeek } from 'date-fns'
-import { Plus, Trash2 } from 'lucide-react'
+import { CalendarDays, Check, Copy, Download, Plus, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { parseHM, toHM } from '../../lib/time'
 import { weekLabelFor } from '../../lib/weeks'
+import { downloadICS } from '../../lib/icsExport'
+import { supabase, supabaseFunctionsUrl } from '../../lib/supabase'
 import { DEFAULT_PERIODS, type Period } from '../../types'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
@@ -18,11 +20,32 @@ interface Props {
 export function SettingsModal({ onClose }: Props) {
   const config = useStore((s) => s.schoolConfig)
   const weekAParity = useStore((s) => s.weekAParity)
+  const classes = useStore((s) => s.classes)
+  const assessments = useStore((s) => s.assessments)
   const updateSchoolConfig = useStore((s) => s.updateSchoolConfig)
   const setWeekAnchor = useStore((s) => s.setWeekAnchor)
 
   const periods = config.periods.length > 0 ? config.periods : DEFAULT_PERIODS
   const [usesWeeks, setUsesWeeks] = useState(Boolean(config.weekAnchorMonday))
+  const [feedUrl, setFeedUrl] = useState<string | null>(null)
+  const [feedBusy, setFeedBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const getSubscribeLink = async () => {
+    if (!supabase || !supabaseFunctionsUrl) return
+    setFeedBusy(true)
+    try {
+      const { data } = await supabase.auth.getSession()
+      const res = await fetch(`${supabaseFunctionsUrl}/calendar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${data.session?.access_token ?? ''}` },
+      })
+      const body = await res.json().catch(() => null)
+      if (body?.url) setFeedUrl(body.url as string)
+    } finally {
+      setFeedBusy(false)
+    }
+  }
 
   const setPeriod = (i: number, patch: Partial<Period>) => {
     const next = periods.map((p, idx) => (idx === i ? { ...p, ...patch } : p))
@@ -171,6 +194,55 @@ export function SettingsModal({ onClose }: Props) {
           <p className="mt-1.5 text-[11px] text-stone-400">
             Periods power the tap-to-build timetable and tidy time labels.
           </p>
+        </section>
+
+        <section>
+          <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-stone-400">
+            <CalendarDays size={13} aria-hidden="true" />
+            Calendar
+          </h3>
+          <p className="mb-2 text-xs text-stone-500">
+            Add your timetable to Google or Apple Calendar — subscribing keeps it updated automatically.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() =>
+                downloadICS({ classes, assessments, weekAParity, untilIso: config.termEnd })
+              }
+              disabled={classes.length === 0}
+            >
+              <Download size={14} aria-hidden="true" />
+              Download .ics
+            </Button>
+            {supabase && supabaseFunctionsUrl && (
+              <Button variant="primary" onClick={() => void getSubscribeLink()} disabled={feedBusy}>
+                <CalendarDays size={14} aria-hidden="true" />
+                {feedBusy ? 'Getting link…' : 'Get subscribe link'}
+              </Button>
+            )}
+          </div>
+          {feedUrl && (
+            <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 p-2">
+              <input
+                readOnly
+                value={feedUrl}
+                className="min-w-0 flex-1 bg-transparent text-xs text-stone-600 focus:outline-none"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                type="button"
+                aria-label="Copy feed URL"
+                onClick={() => {
+                  void navigator.clipboard.writeText(feedUrl)
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 1500)
+                }}
+                className="shrink-0 rounded-md p-1.5 text-stone-500 transition-colors hover:bg-stone-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+              >
+                {copied ? <Check size={14} className="text-emerald-600" aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+              </button>
+            </div>
+          )}
         </section>
 
         <div className="flex justify-end">
