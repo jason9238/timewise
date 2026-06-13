@@ -8,6 +8,7 @@ import type {
   ClassSlot,
   FreeBlock,
   Grade,
+  GradeGoal,
   Note,
   ScheduleResult,
   SchoolConfig,
@@ -28,6 +29,7 @@ interface SyncedState {
   assessments: Assessment[]
   studySessions: StudySession[]
   grades: Grade[]
+  gradeGoals: GradeGoal[]
   subjectNotes: SubjectNote[]
   schoolConfig: SchoolConfig
   onboarded: boolean
@@ -46,6 +48,7 @@ function pickSynced(): SyncedState {
     assessments: s.assessments,
     studySessions: s.studySessions,
     grades: s.grades,
+    gradeGoals: s.gradeGoals,
     subjectNotes: s.subjectNotes,
     schoolConfig: s.schoolConfig,
     onboarded: s.onboarded,
@@ -67,6 +70,7 @@ function applyRemote(data: Partial<SyncedState>) {
     assessments: Array.isArray(data.assessments) ? data.assessments : [],
     studySessions: Array.isArray(data.studySessions) ? data.studySessions : [],
     grades: Array.isArray(data.grades) ? data.grades : [],
+    gradeGoals: Array.isArray(data.gradeGoals) ? data.gradeGoals : [],
     subjectNotes: Array.isArray(data.subjectNotes) ? data.subjectNotes : [],
     schoolConfig:
       data.schoolConfig && Array.isArray(data.schoolConfig.periods)

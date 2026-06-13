@@ -1,14 +1,16 @@
 import { useMemo, useState } from 'react'
 import { format, parseISO, startOfWeek, subDays, subWeeks } from 'date-fns'
-import { Award, Flame, Hourglass, Plus, Trash2, TrendingUp } from 'lucide-react'
+import { Award, Flame, Hourglass, Plus, Target, Trash2, TrendingUp } from 'lucide-react'
 import type { View } from '../App'
 import { useStore } from '../store/useStore'
 import type { Grade } from '../types'
 import { durationLabel } from '../lib/time'
 import { useSubjectPalette } from '../lib/colors'
+import { gpaFromPct, neededOnRemaining, weightedAverage } from '../lib/grades'
 import { HeaderBar } from '../components/layout/HeaderBar'
 import { Widget } from '../components/dashboard/Widget'
 import { GradeForm } from '../components/progress/GradeForm'
+import { GoalForm } from '../components/progress/GoalForm'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -23,9 +25,13 @@ const dayKey = (d: Date | number) => format(d, 'yyyy-MM-dd')
 export function ProgressView({ view, onChangeView }: Props) {
   const sessions = useStore((s) => s.studySessions)
   const grades = useStore((s) => s.grades)
+  const goals = useStore((s) => s.gradeGoals)
   const removeGrade = useStore((s) => s.removeGrade)
   const paletteOf = useSubjectPalette()
   const [showAddGrade, setShowAddGrade] = useState(false)
+  const [showGoals, setShowGoals] = useState(false)
+
+  const goalFor = (subject: string) => goals.find((g) => g.subject === subject)?.targetPct
 
   const stats = useMemo(() => {
     const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }).getTime()
@@ -71,6 +77,14 @@ export function ProgressView({ view, onChangeView }: Props) {
 
   const maxSubjectMin = stats.subjects[0]?.[1] ?? 0
   const weekDelta = stats.thisWeekMin - stats.lastWeekMin
+
+  // Overall average = mean of each subject's weighted average; GPA from that.
+  const overall = useMemo(() => {
+    if (gradesBySubject.length === 0) return null
+    const avgs = gradesBySubject.map(([, list]) => weightedAverage(list))
+    const mean = avgs.reduce((sum, a) => sum + a, 0) / avgs.length
+    return { mean, gpa: gpaFromPct(mean) }
+  }, [gradesBySubject])
 
   return (
     <div className="flex h-full flex-col">
@@ -145,12 +159,37 @@ export function ProgressView({ view, onChangeView }: Props) {
             icon={Award}
             variant="frosted"
             actions={
-              <Button variant="ghost" onClick={() => setShowAddGrade(true)}>
-                <Plus size={14} aria-hidden="true" />
-                Add grade
-              </Button>
+              <div className="flex gap-1.5">
+                <Button variant="ghost" onClick={() => setShowGoals(true)}>
+                  <Target size={14} aria-hidden="true" />
+                  Goals
+                </Button>
+                <Button variant="ghost" onClick={() => setShowAddGrade(true)}>
+                  <Plus size={14} aria-hidden="true" />
+                  Add grade
+                </Button>
+              </div>
             }
           >
+            {overall && (
+              <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-stone-200/80 bg-white p-4 shadow-sm ring-1 ring-stone-100">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">
+                    Overall average
+                  </p>
+                  <p className="font-display text-3xl font-light tabular-nums text-stone-900">
+                    {overall.mean.toFixed(1)}%
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">GPA</p>
+                  <p className="font-display text-3xl font-light tabular-nums text-stone-900">
+                    {overall.gpa.toFixed(1)}
+                    <span className="ml-1 text-sm text-stone-400">/ 4.0</span>
+                  </p>
+                </div>
+              </div>
+            )}
             {gradesBySubject.length === 0 ? (
               <p className="rounded-xl border border-dashed border-stone-200 px-3 py-10 text-center text-sm text-stone-400">
                 No grades yet — record results here or from a finished assessment on the dashboard.
@@ -159,6 +198,8 @@ export function ProgressView({ view, onChangeView }: Props) {
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {gradesBySubject.map(([subject, list]) => {
                   const avg = weightedAverage(list)
+                  const target = goalFor(subject)
+                  const need = target !== undefined ? neededOnRemaining(list, target) : null
                   return (
                     <div
                       key={subject}
@@ -173,6 +214,26 @@ export function ProgressView({ view, onChangeView }: Props) {
                           <span className="ml-1 text-[10px] font-medium text-stone-400">avg</span>
                         </span>
                       </div>
+                      {target !== undefined && (
+                        <div className="mb-3 rounded-lg bg-stone-50 px-2.5 py-2">
+                          <div className="flex items-center justify-between gap-2 text-xs">
+                            <span className="flex items-center gap-1 font-medium text-stone-600">
+                              <Target size={12} aria-hidden="true" />
+                              Goal {target}%
+                            </span>
+                            <span className={avg >= target ? 'font-semibold text-emerald-600' : 'text-stone-400'}>
+                              {avg >= target ? 'On track' : `${(target - avg).toFixed(1)}% to go`}
+                            </span>
+                          </div>
+                          {need && (
+                            <p className={`mt-1 text-[11px] ${need.outOfReach ? 'text-rose-600' : 'text-stone-500'}`}>
+                              {need.outOfReach
+                                ? `Out of reach on the remaining ${need.remainingWeightPct}%`
+                                : `Need ${need.neededPct}% on the remaining ${need.remainingWeightPct}%`}
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <ul className="space-y-1.5">
                         {list.map((g) => (
                           <li key={g.id} className="group flex items-center gap-2 text-sm">
@@ -209,27 +270,13 @@ export function ProgressView({ view, onChangeView }: Props) {
           <GradeForm onDone={() => setShowAddGrade(false)} />
         </Modal>
       )}
+
+      {showGoals && (
+        <Modal title="Grade goals" onClose={() => setShowGoals(false)}>
+          <GoalForm onDone={() => setShowGoals(false)} />
+        </Modal>
+      )}
     </div>
   )
 }
 
-/**
- * Weighted mean of scores. Grades without a weight take the average weight of
- * the ones that have one (plain mean when none do), so unweighted results
- * still count instead of vanishing.
- */
-function weightedAverage(grades: Grade[]): number {
-  const specified = grades.filter((g) => g.weightPct !== undefined)
-  const fallback =
-    specified.length > 0
-      ? specified.reduce((sum, g) => sum + (g.weightPct ?? 0), 0) / specified.length
-      : 1
-  let totalWeight = 0
-  let total = 0
-  for (const g of grades) {
-    const w = g.weightPct ?? fallback
-    totalWeight += w
-    total += g.scorePct * w
-  }
-  return totalWeight > 0 ? total / totalWeight : 0
-}

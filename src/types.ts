@@ -165,6 +165,12 @@ export interface SubjectNote {
   createdAt: number
 }
 
+/** A target final mark for a subject, used by the Progress view. */
+export interface GradeGoal {
+  subject: string
+  targetPct: number
+}
+
 export interface ScheduleResult {
   blocks: ScheduledBlock[]
   /** Tasks that could not be (fully) placed into the available free time. */

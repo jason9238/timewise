@@ -8,6 +8,7 @@ import {
   type ClassSlot,
   type FreeBlock,
   type Grade,
+  type GradeGoal,
   type Note,
   type ReminderTiming,
   type ScheduleResult,
@@ -29,6 +30,7 @@ interface AppState {
   assessments: Assessment[]
   studySessions: StudySession[]
   grades: Grade[]
+  gradeGoals: GradeGoal[]
   subjectNotes: SubjectNote[]
   schoolConfig: SchoolConfig
   /** Whether the first-run onboarding wizard has been completed/skipped. */
@@ -81,6 +83,9 @@ interface AppState {
   addGrade: (g: Omit<Grade, 'id'>) => void
   removeGrade: (id: string) => void
 
+  /** Set (or clear, when target is null) a subject's target final mark. */
+  setGradeGoal: (subject: string, targetPct: number | null) => void
+
   addSubjectNote: (n: Omit<SubjectNote, 'id' | 'createdAt'>) => void
   removeSubjectNote: (id: string) => void
 }
@@ -97,6 +102,7 @@ export const useStore = create<AppState>()(
       assessments: [],
       studySessions: [],
       grades: [],
+      gradeGoals: [],
       subjectNotes: [],
       schoolConfig: { periods: DEFAULT_PERIODS },
       onboarded: false,
@@ -232,6 +238,14 @@ export const useStore = create<AppState>()(
         })),
 
       removeGrade: (id) => set((s) => ({ grades: s.grades.filter((g) => g.id !== id) })),
+
+      setGradeGoal: (subject, targetPct) =>
+        set((s) => {
+          const rest = s.gradeGoals.filter((g) => g.subject !== subject)
+          return {
+            gradeGoals: targetPct === null ? rest : [...rest, { subject, targetPct }],
+          }
+        }),
 
       addSubjectNote: (n) =>
         set((s) => ({
