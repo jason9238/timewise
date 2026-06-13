@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react'
-import { CalendarDays, Clock, LayoutDashboard, Sparkles, TrendingUp } from 'lucide-react'
+import { CalendarDays, Clock, LayoutDashboard, Sparkles, TrendingUp, Users } from 'lucide-react'
 import type { View } from '../../App'
 import { AccountMenu } from '../auth/AccountMenu'
+import { groupsAvailable } from '../../lib/groups'
 
 const NAV: Array<{ view: View; label: string; icon: typeof CalendarDays }> = [
   { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { view: 'timetable', label: 'Timetable', icon: CalendarDays },
   { view: 'scheduler', label: 'AI Scheduler', icon: Sparkles },
   { view: 'progress', label: 'Progress', icon: TrendingUp },
+  ...(groupsAvailable ? [{ view: 'groups' as const, label: 'Groups', icon: Users }] : []),
 ]
 
 interface NavProps {

@@ -7,13 +7,14 @@ import { DashboardView } from './views/DashboardView'
 import { TimetableView } from './views/TimetableView'
 import { SchedulerView } from './views/SchedulerView'
 import { ProgressView } from './views/ProgressView'
+import { GroupsView } from './views/GroupsView'
 import { useAuth } from './hooks/useAuth'
 import { useReminders } from './hooks/useReminders'
 import { useSync } from './lib/sync'
 import { useStore } from './store/useStore'
 import { supabase } from './lib/supabase'
 
-export type View = 'dashboard' | 'timetable' | 'scheduler' | 'progress'
+export type View = 'dashboard' | 'timetable' | 'scheduler' | 'progress' | 'groups'
 
 export default function App() {
   const [view, setView] = useState<View>('dashboard')
@@ -70,8 +71,10 @@ export default function App() {
             <TimetableView view={view} onChangeView={setView} />
           ) : view === 'scheduler' ? (
             <SchedulerView view={view} onChangeView={setView} />
-          ) : (
+          ) : view === 'progress' ? (
             <ProgressView view={view} onChangeView={setView} />
+          ) : (
+            <GroupsView view={view} onChangeView={setView} />
           )}
         </div>
         <MobileTabBar view={view} onChangeView={setView} />
