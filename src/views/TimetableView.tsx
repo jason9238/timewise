@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, BellOff, CalendarPlus, Trash2, Upload } from 'lucide-react'
+import { Bell, BellOff, CalendarPlus, Grid3x3, Trash2, Upload } from 'lucide-react'
 import type { View } from '../App'
 import { useStore } from '../store/useStore'
 import { otherWeek, weekLabelFor } from '../lib/weeks'
@@ -8,6 +8,7 @@ import { TimetableGrid } from '../components/timetable/TimetableGrid'
 import { ClassDetailPanel } from '../components/timetable/ClassDetailPanel'
 import { IcsDropzone } from '../components/timetable/IcsDropzone'
 import { ManualClassForm } from '../components/timetable/ManualClassForm'
+import { TimetableBuilder } from '../components/timetable/TimetableBuilder'
 import { EmptyState } from '../components/timetable/EmptyState'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
@@ -27,6 +28,7 @@ export function TimetableView({ view, onChangeView }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
+  const [showBuild, setShowBuild] = useState(false)
 
   // Week A/B cycle only kicks in when the timetable actually uses it.
   const hasWeeks = classes.some((c) => c.week)
@@ -82,6 +84,10 @@ export function TimetableView({ view, onChangeView }: Props) {
               <Button onClick={() => setShowImport(true)}>
                 <Upload size={14} aria-hidden="true" />
                 <span className="hidden sm:inline">Import .ics</span>
+              </Button>
+              <Button onClick={() => setShowBuild(true)}>
+                <Grid3x3 size={14} aria-hidden="true" />
+                <span className="hidden sm:inline">Build</span>
               </Button>
               <Button onClick={() => setShowAdd(true)}>
                 <CalendarPlus size={14} aria-hidden="true" />
@@ -164,6 +170,12 @@ export function TimetableView({ view, onChangeView }: Props) {
       {showAdd && (
         <Modal title="Add a class" onClose={() => setShowAdd(false)}>
           <ManualClassForm onDone={() => setShowAdd(false)} />
+        </Modal>
+      )}
+
+      {showBuild && (
+        <Modal title="Build your timetable" onClose={() => setShowBuild(false)}>
+          <TimetableBuilder />
         </Modal>
       )}
     </div>

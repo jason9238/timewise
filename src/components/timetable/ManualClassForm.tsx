@@ -9,18 +9,20 @@ const FIELD =
 
 interface Props {
   onDone: () => void
+  /** Prefill day/time/week — used by the tap-to-build grid. */
+  initial?: { day?: Weekday; start?: string; end?: string; week?: WeekLabel | '' }
 }
 
-export function ManualClassForm({ onDone }: Props) {
+export function ManualClassForm({ onDone, initial }: Props) {
   const addClass = useStore((s) => s.addClass)
   const [subject, setSubject] = useState('')
   const [subjectCode, setSubjectCode] = useState('')
   const [teacher, setTeacher] = useState('')
   const [room, setRoom] = useState('')
-  const [day, setDay] = useState<Weekday>(0)
-  const [start, setStart] = useState('09:00')
-  const [end, setEnd] = useState('10:00')
-  const [week, setWeek] = useState<WeekLabel | ''>('')
+  const [day, setDay] = useState<Weekday>(initial?.day ?? 0)
+  const [start, setStart] = useState(initial?.start ?? '09:00')
+  const [end, setEnd] = useState(initial?.end ?? '10:00')
+  const [week, setWeek] = useState<WeekLabel | ''>(initial?.week ?? '')
   const [error, setError] = useState<string | null>(null)
 
   const submit = (e: FormEvent) => {
