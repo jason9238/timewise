@@ -89,6 +89,8 @@ Deno.serve(async (req) => {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Scheduling failed." }, 500);
+    const err = e as { message?: string } | null
+    console.error("schedule error:", e)
+    return json({ error: err?.message ?? "Scheduling failed." }, 500);
   }
 });

@@ -129,7 +129,9 @@ Deno.serve(async (req) => {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Failed." }), {
+    const err = e as { message?: string } | null
+    console.error("calendar error:", e)
+    return new Response(JSON.stringify({ error: err?.message ?? "Failed." }), {
       status: 500, headers: CORS,
     });
   }

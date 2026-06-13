@@ -21,6 +21,17 @@ body {
   color: var(--color-ink);
 }
 
+/* Native time/date fields inherit the proportional body font, which renders the
+   colon with wide side-bearings ("09 : 50"). Force a system UI font with tight,
+   tabular figures so they read as "09:50 AM". */
+input[type="time"],
+input[type="date"] {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  word-spacing: 0;
+}
+
 /* ── Reusable surface treatments ───────────────────────────────────── */
 
 .glass-surface {

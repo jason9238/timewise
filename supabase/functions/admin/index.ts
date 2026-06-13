@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
         return json({ error: `Unknown action: ${String(action)}` }, 400);
     }
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Admin action failed." }, 500);
+    const err = e as { message?: string } | null
+    console.error("admin function error:", e)
+    return json({ error: err?.message ?? "Admin action failed." }, 500);
   }
 });

@@ -97,6 +97,8 @@ Deno.serve(async (req) => {
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Parsing failed." }, 500);
+    const err = e as { message?: string } | null
+    console.error("parse-timetable error:", e)
+    return json({ error: err?.message ?? "Parsing failed." }, 500);
   }
 });

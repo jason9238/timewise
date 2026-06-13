@@ -164,6 +164,12 @@ Deno.serve(async (req) => {
         return json({ error: `Unknown action: ${String(action)}` }, 400);
     }
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Group action failed." }, 500);
+    // Supabase/PostgREST errors are plain objects (not Error instances), so pull
+    // the message off whatever shape we got instead of a generic fallback.
+    const err = e as { message?: string; hint?: string; details?: string } | null;
+    const message =
+      err?.message ?? (typeof e === "string" ? e : JSON.stringify(e)) ?? "Group action failed.";
+    console.error("groups function error:", e);
+    return json({ error: err?.hint ? `${message} (${err.hint})` : message }, 500);
   }
 });
