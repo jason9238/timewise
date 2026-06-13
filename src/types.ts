@@ -16,6 +16,35 @@ export const WEEKDAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
 /** Fortnightly timetable cycle label. Classes without one run every week. */
 export type WeekLabel = 'A' | 'B'
 
+/** A named period/bell slot in the school day. Times are minutes from midnight. */
+export interface Period {
+  name: string
+  start: number
+  end: number
+}
+
+/** Per-school setup so TimeWise fits any timetable, not just one school's. */
+export interface SchoolConfig {
+  schoolName?: string
+  /** Bell times — power the visual builder and friendlier time labels. */
+  periods: Period[]
+  /** ISO dates bounding the current term (for countdowns). */
+  termStart?: string
+  termEnd?: string
+  /** A Monday the user marked as "Week A"; mirrored into weekAParity. */
+  weekAnchorMonday?: string
+}
+
+/** Sensible 6-period default for schools that haven't customised bell times. */
+export const DEFAULT_PERIODS: Period[] = [
+  { name: 'Period 1', start: 9 * 60, end: 9 * 60 + 50 },
+  { name: 'Period 2', start: 9 * 60 + 50, end: 10 * 60 + 40 },
+  { name: 'Period 3', start: 11 * 60, end: 11 * 60 + 50 },
+  { name: 'Period 4', start: 11 * 60 + 50, end: 12 * 60 + 40 },
+  { name: 'Period 5', start: 13 * 60 + 30, end: 14 * 60 + 20 },
+  { name: 'Period 6', start: 14 * 60 + 20, end: 15 * 60 + 10 },
+]
+
 /** A recurring weekly class. Times are minutes from midnight. */
 export interface ClassSlot {
   id: string

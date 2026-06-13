@@ -2,19 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { highSchoolSample, universitySample } from '../lib/sampleData'
 import { weekParity } from '../lib/weeks'
-import type {
-  Assessment,
-  ClassSlot,
-  FreeBlock,
-  Grade,
-  Note,
-  ReminderTiming,
-  ScheduleResult,
-  StudySession,
-  SubjectNote,
-  Task,
-  WeekLabel,
-  WeeklyReminder,
+import {
+  DEFAULT_PERIODS,
+  type Assessment,
+  type ClassSlot,
+  type FreeBlock,
+  type Grade,
+  type Note,
+  type ReminderTiming,
+  type ScheduleResult,
+  type SchoolConfig,
+  type StudySession,
+  type SubjectNote,
+  type Task,
+  type WeekLabel,
+  type WeeklyReminder,
 } from '../types'
 
 interface AppState {
@@ -28,6 +30,7 @@ interface AppState {
   studySessions: StudySession[]
   grades: Grade[]
   subjectNotes: SubjectNote[]
+  schoolConfig: SchoolConfig
   /** Which fortnight parity is labelled "Week A" (see lib/weeks.ts). */
   weekAParity: 0 | 1
   /** Browser notifications before classes and on due dates. */
@@ -50,6 +53,10 @@ interface AppState {
 
   /** Corrects the A/B cycle, e.g. "the current week is actually Week B". */
   setThisWeekIs: (label: WeekLabel) => void
+
+  updateSchoolConfig: (partial: Partial<SchoolConfig>) => void
+  /** Mark a Monday as "Week A"; keeps weekAParity (used everywhere) in sync. */
+  setWeekAnchor: (mondayIso: string) => void
 
   setRemindersEnabled: (on: boolean) => void
 
@@ -87,6 +94,7 @@ export const useStore = create<AppState>()(
       studySessions: [],
       grades: [],
       subjectNotes: [],
+      schoolConfig: { periods: DEFAULT_PERIODS },
       weekAParity: 0,
       remindersEnabled: false,
       reminderLeadMin: 10,
@@ -150,6 +158,16 @@ export const useStore = create<AppState>()(
         const parity = weekParity(new Date())
         set({ weekAParity: label === 'A' ? parity : ((1 - parity) as 0 | 1) })
       },
+
+      updateSchoolConfig: (partial) =>
+        set((s) => ({ schoolConfig: { ...s.schoolConfig, ...partial } })),
+
+      setWeekAnchor: (mondayIso) =>
+        set((s) => ({
+          schoolConfig: { ...s.schoolConfig, weekAnchorMonday: mondayIso },
+          // The anchor Monday is, by definition, a Week A week.
+          weekAParity: weekParity(new Date(`${mondayIso}T00:00`)),
+        })),
 
       setRemindersEnabled: (on) => set({ remindersEnabled: on }),
 

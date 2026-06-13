@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { LogOut, ShieldCheck } from 'lucide-react'
+import { LogOut, Settings, ShieldCheck } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../hooks/useAuth'
 import { useIsAdmin } from '../../lib/admin'
 import { AdminPanel } from '../admin/AdminPanel'
+import { SettingsModal } from '../settings/SettingsModal'
 
 export function AccountMenu() {
   const { user } = useAuth()
   const isAdmin = useIsAdmin(user)
   const [open, setOpen] = useState(false)
   const [showAdmin, setShowAdmin] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   if (!supabase || !user) return null
 
@@ -38,6 +40,17 @@ export function AccountMenu() {
           <div className="frosted-surface absolute right-0 top-10 z-50 w-60 rounded-2xl p-2 text-left">
             <p className="truncate px-3 py-2 text-xs text-stone-500">{user.email}</p>
             <p className="px-3 pb-2 text-[11px] font-medium text-emerald-700">Syncing across devices</p>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                setShowSettings(true)
+              }}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-stone-700 transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-300"
+            >
+              <Settings size={14} aria-hidden="true" />
+              Settings
+            </button>
             {isAdmin && (
               <button
                 type="button"
@@ -66,6 +79,7 @@ export function AccountMenu() {
         </>
       )}
       {showAdmin && <AdminPanel onClose={() => setShowAdmin(false)} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   )
 }

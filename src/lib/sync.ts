@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { supabase } from './supabase'
 import { useAuth } from '../hooks/useAuth'
+import { DEFAULT_PERIODS } from '../types'
 import type {
   Assessment,
   ClassSlot,
@@ -9,6 +10,7 @@ import type {
   Grade,
   Note,
   ScheduleResult,
+  SchoolConfig,
   StudySession,
   SubjectNote,
   Task,
@@ -27,6 +29,7 @@ interface SyncedState {
   studySessions: StudySession[]
   grades: Grade[]
   subjectNotes: SubjectNote[]
+  schoolConfig: SchoolConfig
   weekAParity: 0 | 1
 }
 
@@ -43,6 +46,7 @@ function pickSynced(): SyncedState {
     studySessions: s.studySessions,
     grades: s.grades,
     subjectNotes: s.subjectNotes,
+    schoolConfig: s.schoolConfig,
     weekAParity: s.weekAParity,
   }
 }
@@ -62,6 +66,10 @@ function applyRemote(data: Partial<SyncedState>) {
     studySessions: Array.isArray(data.studySessions) ? data.studySessions : [],
     grades: Array.isArray(data.grades) ? data.grades : [],
     subjectNotes: Array.isArray(data.subjectNotes) ? data.subjectNotes : [],
+    schoolConfig:
+      data.schoolConfig && Array.isArray(data.schoolConfig.periods)
+        ? data.schoolConfig
+        : { periods: DEFAULT_PERIODS },
     weekAParity: data.weekAParity === 1 ? 1 : 0,
   })
   applyingRemote = false
