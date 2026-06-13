@@ -31,6 +31,8 @@ interface AppState {
   grades: Grade[]
   subjectNotes: SubjectNote[]
   schoolConfig: SchoolConfig
+  /** Whether the first-run onboarding wizard has been completed/skipped. */
+  onboarded: boolean
   /** Which fortnight parity is labelled "Week A" (see lib/weeks.ts). */
   weekAParity: 0 | 1
   /** Browser notifications before classes and on due dates. */
@@ -57,6 +59,8 @@ interface AppState {
   updateSchoolConfig: (partial: Partial<SchoolConfig>) => void
   /** Mark a Monday as "Week A"; keeps weekAParity (used everywhere) in sync. */
   setWeekAnchor: (mondayIso: string) => void
+
+  setOnboarded: (v: boolean) => void
 
   setRemindersEnabled: (on: boolean) => void
 
@@ -95,6 +99,7 @@ export const useStore = create<AppState>()(
       grades: [],
       subjectNotes: [],
       schoolConfig: { periods: DEFAULT_PERIODS },
+      onboarded: false,
       weekAParity: 0,
       remindersEnabled: false,
       reminderLeadMin: 10,
@@ -168,6 +173,8 @@ export const useStore = create<AppState>()(
           // The anchor Monday is, by definition, a Week A week.
           weekAParity: weekParity(new Date(`${mondayIso}T00:00`)),
         })),
+
+      setOnboarded: (v) => set({ onboarded: v }),
 
       setRemindersEnabled: (on) => set({ remindersEnabled: on }),
 

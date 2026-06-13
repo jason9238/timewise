@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Backdrop, Hero } from './components/layout/Hero'
 import { MobileTabBar } from './components/layout/HeaderBar'
 import { SignInGate } from './components/auth/SignInGate'
+import { OnboardingWizard } from './components/onboarding/OnboardingWizard'
 import { DashboardView } from './views/DashboardView'
 import { TimetableView } from './views/TimetableView'
 import { SchedulerView } from './views/SchedulerView'
@@ -9,6 +10,7 @@ import { ProgressView } from './views/ProgressView'
 import { useAuth } from './hooks/useAuth'
 import { useReminders } from './hooks/useReminders'
 import { useSync } from './lib/sync'
+import { useStore } from './store/useStore'
 import { supabase } from './lib/supabase'
 
 export type View = 'dashboard' | 'timetable' | 'scheduler' | 'progress'
@@ -17,6 +19,8 @@ export default function App() {
   const [view, setView] = useState<View>('dashboard')
   const appRef = useRef<HTMLDivElement>(null)
   const { user, loading } = useAuth()
+  const onboarded = useStore((s) => s.onboarded)
+  const hasClasses = useStore((s) => s.classes.length > 0)
   useReminders()
   useSync()
 
@@ -38,6 +42,17 @@ export default function App() {
       <div className="h-dvh">
         <Backdrop />
         <SignInGate />
+      </div>
+    )
+  }
+
+  // First-run setup for new users (skippable). Hidden once onboarded or if a
+  // timetable already exists (e.g. synced from another device).
+  if (!onboarded && !hasClasses) {
+    return (
+      <div className="h-dvh">
+        <Backdrop />
+        <OnboardingWizard />
       </div>
     )
   }

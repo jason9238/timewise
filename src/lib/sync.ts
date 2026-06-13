@@ -30,6 +30,7 @@ interface SyncedState {
   grades: Grade[]
   subjectNotes: SubjectNote[]
   schoolConfig: SchoolConfig
+  onboarded: boolean
   weekAParity: 0 | 1
 }
 
@@ -47,6 +48,7 @@ function pickSynced(): SyncedState {
     grades: s.grades,
     subjectNotes: s.subjectNotes,
     schoolConfig: s.schoolConfig,
+    onboarded: s.onboarded,
     weekAParity: s.weekAParity,
   }
 }
@@ -70,6 +72,7 @@ function applyRemote(data: Partial<SyncedState>) {
       data.schoolConfig && Array.isArray(data.schoolConfig.periods)
         ? data.schoolConfig
         : { periods: DEFAULT_PERIODS },
+    onboarded: data.onboarded === true,
     weekAParity: data.weekAParity === 1 ? 1 : 0,
   })
   applyingRemote = false
